@@ -1,4 +1,4 @@
-module router_1x4 (
+module router(
     input clk,
     input rst,
     input pkt_valid,
@@ -39,7 +39,11 @@ module router_1x4 (
             end
 
             START: begin
-                next_state = ROUTE;
+                if (ready_out[dest_reg])   
+                   
+                  next_state = ROUTE;
+                else
+                    next_state = START;   // Backpressure stall
             end
 
             ROUTE: begin
@@ -145,3 +149,4 @@ module router_1x4 (
     end
 
 endmodule
+
