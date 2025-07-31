@@ -1,6 +1,6 @@
-`timescale 1ns/1ps
+`timescale 1ns / 1ps
 
-module tb_router_1x4;
+module tb_router;
 
     reg clk, rst;
     reg pkt_valid;
@@ -13,7 +13,7 @@ module tb_router_1x4;
     wire ready_in;
     wire [1:0] state_out;
 
-    router_1x4 uut (
+    router uut (
         .clk(clk),
         .rst(rst),
         .pkt_valid(pkt_valid),
@@ -28,57 +28,44 @@ module tb_router_1x4;
         .ready_in(ready_in),
         .state_out(state_out)
     );
-  
-    initial clk = 0;
-    always #5 clk = ~clk; // 10ns period
 
-    // Stimulus
+
+    always #5 clk = ~clk;
+
     initial begin
-        $monitor("T=%0t | State=%b | pkt_valid=%b | data=%h | dest=%b | ready_out=%b | valid_out=%b | data_out0=%h",
-                  $time, state_out, pkt_valid, data_in, dest_addr, ready_out, valid_out, data_out0);
+        $dumpfile("router.vcd");
+        $dumpvars(0, tb_router);
 
-        rst = 1; pkt_valid = 0; data_in = 0; dest_addr = 0; ready_out = 4'b1111;
-        #20;
-        rst = 0;
-
-        // Send packet to port 0
-        @(posedge clk);
-        pkt_valid = 1;
-        data_in = 8'hA1;
+        clk = 0;
+        rst = 1;
+        pkt_valid = 0;
+        data_in = 8'h00;
         dest_addr = 2'b00;
+        ready_out = 4'b1111;
 
-        @(posedge clk);
-        pkt_valid = 0; 
+        #15 rst = 0;
 
-        repeat (5) @(posedge clk);
-       
-      // Sending packet to port 1
-        @(posedge clk);
-        pkt_valid = 1;
-        data_in = 8'hB2;
-        dest_addr = 2'b01;
+        #10 pkt_valid = 1;
+            data_in = 8'hAA;
+            dest_addr = 2'b00;
 
-        @(posedge clk);
-        pkt_valid = 0;
+        #10 pkt_valid = 0;
 
-        repeat (5) @(posedge clk);
-
-        // Simulating WAIT 
-        @(posedge clk);
-        pkt_valid = 1;
-        data_in = 8'hC3;
-        dest_addr = 2'b10;
-        ready_out[2] = 0; // Port 2 not ready
-
-        @(posedge clk);
-        pkt_valid = 0;
-
-        // now port 2 is ready
         #30;
-        ready_out[2] = 1;
 
-        repeat (5) @(posedge clk);
+        ready_out = 4'b1101; // port 1 not ready
+        #10 pkt_valid = 1;
+            data_in = 8'hBB;
+            dest_addr = 2'b01;
+
+        #10 pkt_valid = 0;
+
+        #20 ready_out = 4'b1111;
+
+        #40;
+
         $finish;
     end
 
 endmodule
+
